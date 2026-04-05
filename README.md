@@ -44,6 +44,17 @@ pip install -r requirements.txt
 
 
 
+## Features
+
+- **Chronological Sorting** — tasks are sorted by `scheduled_time` using string comparison on zero-padded `HH:MM` values; no parsing needed
+- **Conflict Warnings** — pairwise overlap detection flags any two tasks whose time windows intersect, shown as red banners in the UI
+- **Priority-Based Scheduling** — daily plan fills available time greedily by priority (high → medium → low), skipping tasks that don't fit
+- **Filter by Pet** — multi-pet households can view tasks for a single pet using case-insensitive name matching
+- **Filter by Status** — toggle between incomplete and completed tasks
+- **Daily/Weekly Recurrence** — marking a recurring task complete auto-creates the next occurrence via `timedelta` (no manual re-entry)
+- **Reasoning Explanation** — plain-English summary of how many tasks were scheduled, total time used, and which tasks were skipped and why
+- **Live Conflict Check** — conflict detection runs on every task view refresh, not just at schedule generation time
+
 ## Smarter Scheduling
 
 Phase 2 added four algorithmic improvements to the scheduler: tasks are now sorted chronologically by `scheduled_time` using a lambda key on zero-padded `"HH:MM"` strings; the task list can be filtered by pet name or completion status to reduce noise for multi-pet households; recurring `"daily"` and `"weekly"` tasks automatically generate their next occurrence (via `timedelta`) the moment they are marked complete, eliminating manual re-entry; and a lightweight pairwise conflict detector warns the owner whenever two tasks overlap the same time window, surfacing the warning in both the terminal and the Streamlit UI without ever crashing the app.

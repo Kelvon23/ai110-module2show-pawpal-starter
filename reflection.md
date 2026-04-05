@@ -36,7 +36,12 @@ I did make some changes. I moved a method that was in task which were add/edit t
 **a. Constraints and priorities**
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
+
+The constraints were time, priority and time conflicts
+
 - How did you decide which constraints mattered most?
+
+I decide these were the most important based on the system requirments in the read me file. 
 
 **b. Tradeoffs**
 
@@ -65,12 +70,15 @@ The tradeoff is reasonable here bc we want the owner be able to take a glance at
 **a. What you tested**
 
 - What behaviors did you test?
+I tested to make sure mark_complete did what it was set to do which was mark completed on a task. I tested add_ tasks to ensure you can add pet task count. I also did some testing for sorting like sort by time to make sure it returns in chronological order etc.
 - Why were these tests important?
-
+These tests were important to ensure the system output the correct things as these methods are important features w/o them working the output wouldve been wrong 
 **b. Confidence**
 
 - How confident are you that your scheduler works correctly?
+I am confident that scheudler works as it passed the test i gave it and gave the corrected output 
 - What edge cases would you test next if you had more time?
+I would test detech conflicts to esnure it able to detect conflicts and print out the correct message.
 
 ---
 
@@ -80,10 +88,20 @@ The tradeoff is reasonable here bc we want the owner be able to take a glance at
 
 - What part of this project are you most satisfied with?
 
+I was satifised with my intial uml as it had the core features that the system required to have. Though i did have to make some touch ups afterwards to ensure my intial uml would translate to good working code.
+
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?
 
+I would just try to add more features to the user like letting them have a way to use discard tasks for another day and have re priotize it.
+
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+
+I learned that context matters a lot when designing as w/o the initial uml they would of been a lot errors done by the ai as it will come with it own solution which could possible be not optimal. 
+
+
+
+

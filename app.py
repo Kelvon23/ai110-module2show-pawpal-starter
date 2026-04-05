@@ -119,16 +119,26 @@ else:
         else:
             filtered = sorted(filtered, key=lambda t: scheduler.PRIORITY_ORDER.get(t.priority, 99))
 
+        # Live conflict check on all tasks
+        conflicts = scheduler.detect_conflicts(all_tasks)
+        if conflicts:
+            st.error(f"⚠️ {len(conflicts)} scheduling conflict(s) detected!")
+            with st.expander("View conflicts"):
+                for msg in conflicts:
+                    # Strip the leading "WARNING: " prefix for cleaner display
+                    st.warning(msg.replace("WARNING: ", ""))
+
         if filtered:
+            priority_emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}
             st.table([
                 {
                     "time": t.scheduled_time,
                     "pet": owner.get_pet(t.pet_id).name if owner.get_pet(t.pet_id) else t.pet_id,
                     "task": t.name,
                     "duration (min)": t.duration,
-                    "priority": t.priority,
+                    "priority": priority_emoji.get(t.priority, "") + " " + t.priority,
                     "frequency": t.frequency,
-                    "done": t.completed,
+                    "done": "✅" if t.completed else "⬜",
                 }
                 for t in filtered
             ])
@@ -145,13 +155,15 @@ if st.button("Generate schedule"):
     plan = scheduler.generate_daily_plan()
 
     if plan:
-        # Conflict check
         conflicts = scheduler.detect_conflicts(plan)
         if conflicts:
+            st.error(f"⚠️ {len(conflicts)} conflict(s) in your schedule — tasks overlap in time!")
             for msg in conflicts:
-                st.warning(msg)
+                st.warning(msg.replace("WARNING: ", ""))
+        else:
+            st.success("No conflicts detected — your schedule looks good!")
 
-        st.success(scheduler.explain_reasoning(plan))
+        st.info(scheduler.explain_reasoning(plan))
         st.table([
             {
                 "time": t.scheduled_time,
