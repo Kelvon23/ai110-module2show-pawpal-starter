@@ -44,5 +44,6 @@ pip install -r requirements.txt
 
 
 
+## Smarter Scheduling
 
-
+Phase 2 added four algorithmic improvements to the scheduler: tasks are now sorted chronologically by `scheduled_time` using a lambda key on zero-padded `"HH:MM"` strings; the task list can be filtered by pet name or completion status to reduce noise for multi-pet households; recurring `"daily"` and `"weekly"` tasks automatically generate their next occurrence (via `timedelta`) the moment they are marked complete, eliminating manual re-entry; and a lightweight pairwise conflict detector warns the owner whenever two tasks overlap the same time window, surfacing the warning in both the terminal and the Streamlit UI without ever crashing the app.

@@ -41,8 +41,9 @@ I did make some changes. I moved a method that was in task which were add/edit t
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+One tradeoff that my scheduuler makes is it uses greedy priortity-first scheduling which sacraifices time effiecinecy for simplicity. 
 - Why is that tradeoff reasonable for this scenario?
-
+The tradeoff is reasonable here bc we want the owner be able to take a glance at the schedule and immediately understand why a task was or wasnt included. 
 ---
 
 ## 3. AI Collaboration

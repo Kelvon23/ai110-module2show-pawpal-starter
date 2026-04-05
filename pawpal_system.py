@@ -1,4 +1,6 @@
 from dataclasses import dataclass, field
+from datetime import date, timedelta
+from itertools import combinations
 from typing import List, Optional
 
 
@@ -11,6 +13,8 @@ class Task:
     priority: str               # "high", "medium", "low"
     frequency: str = "daily"    # "daily", "weekly", "as_needed"
     completed: bool = False
+    scheduled_time: str = "00:00"  # "HH:MM" format, e.g. "08:30"
+    due_date: date = field(default_factory=date.today)
 
     def mark_complete(self):
         """Mark this task as completed."""
@@ -91,6 +95,157 @@ class Scheduler:
 
     def __init__(self, owner: Owner):
         self.owner = owner                     # keep live reference, not a copy
+
+    def sort_by_time(self, tasks: List[Task]) -> List[Task]:
+        """Sort a list of tasks into chronological order by scheduled_time.
+
+        Uses Python's built-in sorted() with a lambda key. Because scheduled_time
+        is stored as a zero-padded 'HH:MM' string, plain string comparison produces
+        correct chronological ordering without parsing — '07:00' < '08:30' < '18:00'.
+
+        Args:
+            tasks: The list of Task objects to sort. The original list is not modified.
+
+        Returns:
+            A new list of Task objects ordered earliest scheduled_time first.
+        """
+        return sorted(tasks, key=lambda t: t.scheduled_time)
+
+    def filter_by_status(self, tasks: List[Task], completed: bool) -> List[Task]:
+        """Filter tasks by their completion status.
+
+        Args:
+            tasks: The list of Task objects to filter.
+            completed: Pass True to keep only finished tasks,
+                       False to keep only tasks still pending.
+
+        Returns:
+            A new list containing only the tasks whose completed flag
+            matches the given value.
+        """
+        return [t for t in tasks if t.completed == completed]
+
+    def filter_by_pet(self, tasks: List[Task], pet_name: str) -> List[Task]:
+        """Filter tasks so only those belonging to a specific pet are returned.
+
+        Builds a set of matching pet_ids first (O(p) where p = number of pets),
+        then filters in a single pass over tasks (O(t)), making the overall
+        complexity O(p + t) rather than O(p * t).
+
+        Args:
+            tasks: The list of Task objects to filter.
+            pet_name: The pet's display name. Matching is case-insensitive,
+                      so 'buddy' and 'Buddy' are treated as the same pet.
+
+        Returns:
+            A new list of Task objects assigned to the named pet.
+            Returns an empty list if no pet with that name exists.
+        """
+        matching_ids = {
+            p.pet_id for p in self.owner.pets
+            if p.name.lower() == pet_name.lower()
+        }
+        return [t for t in tasks if t.pet_id in matching_ids]
+
+    def complete_task(self, task: Task) -> Optional[Task]:
+        """Mark a task complete and auto-schedule the next occurrence for recurring tasks.
+
+        For tasks with frequency 'daily' or 'weekly', a new Task instance is
+        created with the same attributes and a due_date advanced by 1 or 7 days
+        respectively (calculated with datetime.timedelta). The new task is
+        immediately registered on the owning pet so it appears in future plans.
+
+        Tasks with frequency 'as_needed' are simply marked complete; no follow-up
+        task is created.
+
+        Args:
+            task: The Task to complete. Its completed flag is set to True in-place.
+
+        Returns:
+            The newly created next-occurrence Task if the task is recurring,
+            or None if frequency is 'as_needed'.
+        """
+        task.mark_complete()
+
+        if task.frequency not in ("daily", "weekly"):
+            return None
+
+        # timedelta calculates the next due date precisely:
+        # daily → today + 1 day, weekly → today + 7 days
+        days_ahead = 1 if task.frequency == "daily" else 7
+        next_due = task.due_date + timedelta(days=days_ahead)
+
+        next_task = Task(
+            task_id=f"{task.task_id}_next",
+            pet_id=task.pet_id,
+            name=task.name,
+            duration=task.duration,
+            priority=task.priority,
+            frequency=task.frequency,
+            scheduled_time=task.scheduled_time,
+            due_date=next_due,
+        )
+
+        pet = self.owner.get_pet(task.pet_id)
+        if pet:
+            pet.add_task(next_task)
+
+        return next_task
+
+    @staticmethod
+    def _to_minutes(hhmm: str) -> int:
+        """Convert a 'HH:MM' time string to an integer number of minutes from midnight.
+
+        Used internally by detect_conflicts to compare task windows numerically.
+
+        Args:
+            hhmm: A zero-padded time string in 'HH:MM' format, e.g. '08:30'.
+
+        Returns:
+            Total minutes from midnight as an int. '08:30' → 510, '18:00' → 1080.
+        """
+        h, m = hhmm.split(":")
+        return int(h) * 60 + int(m)
+
+    def detect_conflicts(self, tasks: List[Task]) -> List[str]:
+        """Detect scheduling conflicts among incomplete tasks and return human-readable warnings.
+
+        Uses itertools.combinations to check every pair of incomplete tasks exactly once.
+        Two tasks conflict when their scheduled time windows overlap, i.e.:
+            task_a starts before task_b ends  AND  task_b starts before task_a ends.
+
+        This is a lightweight O(n²) pairwise scan — acceptable because a typical daily
+        pet schedule has a small number of tasks. The method never raises; callers always
+        receive a list (empty = no conflicts).
+
+        Args:
+            tasks: The list of Task objects to check. Completed tasks are ignored.
+
+        Returns:
+            A list of warning strings, one per conflicting pair, in the format:
+            "WARNING: '<name_a>' (<pet_a>, HH:MM for N min) overlaps with '<name_b>' (...)".
+            Returns an empty list if no conflicts are found.
+        """
+        warnings = []
+        incomplete = [t for t in tasks if not t.completed]
+
+        for a, b in combinations(incomplete, 2):
+            a_start = self._to_minutes(a.scheduled_time)
+            a_end   = a_start + a.duration
+            b_start = self._to_minutes(b.scheduled_time)
+            b_end   = b_start + b.duration
+
+            # Overlap condition: one window starts before the other ends
+            if a_start < b_end and b_start < a_end:
+                pet_a = self.owner.get_pet(a.pet_id)
+                pet_b = self.owner.get_pet(b.pet_id)
+                warnings.append(
+                    f"WARNING: '{a.name}' ({pet_a.name if pet_a else a.pet_id}, "
+                    f"{a.scheduled_time} for {a.duration} min) overlaps with "
+                    f"'{b.name}' ({pet_b.name if pet_b else b.pet_id}, "
+                    f"{b.scheduled_time} for {b.duration} min)"
+                )
+        return warnings
 
     def generate_daily_plan(self) -> List[Task]:
         """Return a priority-sorted list of tasks that fit within the owner's available time."""
