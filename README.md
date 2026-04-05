@@ -47,3 +47,17 @@ pip install -r requirements.txt
 ## Smarter Scheduling
 
 Phase 2 added four algorithmic improvements to the scheduler: tasks are now sorted chronologically by `scheduled_time` using a lambda key on zero-padded `"HH:MM"` strings; the task list can be filtered by pet name or completion status to reduce noise for multi-pet households; recurring `"daily"` and `"weekly"` tasks automatically generate their next occurrence (via `timedelta`) the moment they are marked complete, eliminating manual re-entry; and a lightweight pairwise conflict detector warns the owner whenever two tasks overlap the same time window, surfacing the warning in both the terminal and the Streamlit UI without ever crashing the app.
+
+Testing PawPal+:
+
+python -m pytest
+
+
+Sorting Correctness — confirms sort_by_time returns tasks in chronological order (07:00 → 12:00 → 18:00) and doesn't mutate the original list. Confidence Level Rating - 5 
+
+Recurrence Logic — verifies that completing a daily task creates a new task due tomorrow, weekly creates one due in 7 days, and as_needed returns None with no new task added.  Confidence Level Rating - 4
+
+Conflict Detection — checks that overlapping time windows (including exact same start time) trigger a WARNING, non-overlapping tasks produce no warnings, and already-completed tasks are ignored. Confidence Level Rating - 5 
+
+Edge Cases — a pet with no tasks returns an empty plan, an owner with 0 minutes available schedules nothing, and filtering by a nonexistent pet name returns [] without crashing.
+Confidence Level Rating - 3
