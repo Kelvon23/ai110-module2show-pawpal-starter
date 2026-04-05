@@ -17,13 +17,18 @@ Scheduler - attributes: get the time time constraints & priorties from the user,
 **a. Initial design**
 
 - Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+I  create my uml based on the relationships I thought will be needed to successful run the project. As owner has pets is an important relationship here to ensure that there link between them as w/o we wouldn't know who schedule to task too and so on.
+- What classes did you include, and what 
+responsibilities did you assign to each?
+
+The classes I include were the 4 that were mention earlier to us. Classes Owner, Pet, Task, Scheduler. The respondibilites I assign the 4 of them were dependent on the link they had of one owner. For example in owner has pets I knew we need to link the 2 together so in classes for owner i made to sure to create unique id to be able to link to pet and also include important info that will be used later for scheduler like knowing the owner time constraints and priotires. As well as making sure the owner can add/edit pets.
 
 **b. Design changes**
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
 
+I did make some changes. I moved a method that was in task which were add/edit tasks and now I moved to pets. I did that cause I make the mistake in thinking that task should self manage itself which doesn't make sense instead it should be link to pet where we are doing the task.
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
