@@ -1,6 +1,18 @@
 # PawPal+ Project Reflection
 
 ## 1. System Design
+Core Actions:
+
+Be able to track pet care taks i.e allow user to add/edit tasks
+Be able to create a daily plan based on the user constraints 
+Lastly be able to display plan clearly 
+
+Objects - Owner, Pet, Task, Scheduler
+
+Owner - attributes: have a unique identifer,time constraints & priorties, methods: add/edit pets,
+Pet - attributes: have a unique identifer, link up to owner, link up to tasks.
+Task - attributes: link up to pet for specific task, method: add/edit tasks
+Scheduler - attributes: get the time time constraints & priorties from the user, get the tasks for specific pets. method: create a daily plan, display the daily plan and explain the reasoning
 
 **a. Initial design**
 
